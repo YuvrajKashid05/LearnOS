@@ -1,4 +1,4 @@
-import { getCurrentUser, loginUser, registerUser } from "../services/auth.service.js";
+import { getCurrentUser, loginUser, refreshUserToken, registerUser, } from "../services/auth.service.js";
 import { setRefreshTokenCookie } from "../utils/cookie.js";
 import { sendSuccess } from "../utils/response.js";
 import { loginSchema, registerSchema } from "../validations/auth.validation.js";
@@ -63,3 +63,22 @@ export const me = async (req, res, next) => {
     next(error);
   }
 };
+
+export const refresh = async (req, res, next) => {
+  try {
+    const incomingToken = req.cookies?.refreshToken;
+
+    const result = await refreshUserToken(incomingToken);
+
+    setRefreshTokenCookie(res, result.refreshToken);
+
+    return sendSuccess(
+      res,
+      "Token refreshed Successfully", {
+        accessToken: result.accessToken,
+      }
+    )
+  } catch (error) {
+    return next(error);
+  }
+}

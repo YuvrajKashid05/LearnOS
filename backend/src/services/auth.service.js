@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { createUser, findUserByEmail, findUserById, updateRefreshToken } from "../repositories/user.repositories.js";
 import AppError from "../utils/AppError.js";
-import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
+import { generateAccessToken, generateRefreshToken, hashToken, verifyRefreshToken } from "../utils/jwt.js";
 
 export const registerUser = async (data) => {
     const existingUser = await findUserByEmail(data.email);
@@ -26,7 +26,7 @@ export const registerUser = async (data) => {
 
     const refreshToken = generateRefreshToken(payload);
 
-    await updateRefreshToken(user.id, refreshToken);
+    await updateRefreshToken(user.id, hashToken(refreshToken));
 
     return {
         user: {
@@ -64,7 +64,7 @@ export const loginUser = async ({ email, password }) => {
 
     const refreshToken = generateRefreshToken(payload);
 
-    await updateRefreshToken(user.id, refreshToken);
+    await updateRefreshToken(user.id, hashToken(refreshToken));
 
     const safeUser = {
         id: user.id,
@@ -98,3 +98,41 @@ export const getCurrentUser = async (id) => {
         createdAt: user.createdAt,
     };
 };
+
+export const refreshUserToken = async (refreshToken) => {
+    if (!refreshToken) {
+        throw new AppError("Reresh token is required", 400);
+    }
+
+    try {
+        const decoded = verifyRefreshToken(refreshToken);
+    } catch (error) {
+        throw new AppError("Invalid refresh token", 401);
+    }
+
+    const user = await findUserById(decoded.id)
+
+    if (!user || !user.refreshToken) {
+        throw new AppError("Invalid refresh token", 401);
+    }
+
+    if (hashToken(refreshToken) !== user.refreshToken) {
+        throw new AppError("Invalid Refresh token", 401);
+    }
+    const payload = {
+        id: user.id,
+        email: user.email,
+    }
+
+    const newAccesstToken = generateAccessToken(payload);
+    const newRefreshToken = generateRefreshToken(payload);
+
+    await updateRefreshToken(user.id, hashToken(newRefreshToken));
+
+    return {
+        accessToken: newAccesstToken,
+        refreshToken: newRefreshToken
+    };
+
+};
+
