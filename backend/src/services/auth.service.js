@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { createUser, findUserByEmail, updateRefreshToken } from "../repositories/user.repositories.js";
+import { createUser, findUserByEmail, findUserById, updateRefreshToken } from "../repositories/user.repositories.js";
 import AppError from "../utils/AppError.js";
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt.js";
 
@@ -40,7 +40,7 @@ export const registerUser = async (data) => {
         accessToken,
         refreshToken,
     };
-}
+};
 
 export const loginUser = async ({ email, password }) => {
     const user = await findUserByEmail(email);
@@ -80,4 +80,21 @@ export const loginUser = async ({ email, password }) => {
         refreshToken,
     };
 
+};
+
+export const getCurrentUser = async (id) => {
+    const user = await findUserById(id);
+
+    if (!user) {
+        throw new AppError("User not found", 404);
+    }
+
+    return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
+    };
 };
