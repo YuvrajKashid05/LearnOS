@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import { createUser, findUserByEmail, findUserById, updateRefreshToken } from "../repositories/user.repositories.js";
 import AppError from "../utils/AppError.js";
-import { generateAccessToken, generateRefreshToken, hashToken, verifyRefreshToken } from "../utils/jwt.js";
+import { compareTokenHashes, generateAccessToken, generateRefreshToken, hashToken, verifyRefreshToken } from "../utils/jwt.js";
 
 export const registerUser = async (data) => {
     const existingUser = await findUserByEmail(data.email);
@@ -118,7 +118,7 @@ export const refreshUserToken = async (refreshToken) => {
         throw new AppError("Invalid refresh token", 401);
     }
 
-    if (hashToken(refreshToken) !== user.refreshToken) {
+    if (!compareTokenHashes(hashToken(refreshToken), user.refreshToken)) {
         throw new AppError("Invalid Refresh token", 401);
     }
     const payload = {
