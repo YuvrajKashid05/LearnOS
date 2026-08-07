@@ -104,8 +104,10 @@ export const refreshUserToken = async (refreshToken) => {
         throw new AppError("Reresh token is required", 400);
     }
 
+    let decoded;
+    
     try {
-        const decoded = verifyRefreshToken(refreshToken);
+        decoded = verifyRefreshToken(refreshToken);
     } catch (error) {
         throw new AppError("Invalid refresh token", 401);
     }
@@ -134,5 +136,13 @@ export const refreshUserToken = async (refreshToken) => {
         refreshToken: newRefreshToken
     };
 
+};
+
+export const logoutUser = async (id) => {
+    if (!id) return;
+
+    await updateRefreshToken(id, null);
+
+    return true;
 };
 

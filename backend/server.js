@@ -1,3 +1,4 @@
+import cookieParser from "cookie-parser";
 import express from "express";
 import errorHandler from "./src/middleware/error.middleware.js";
 import notfoundError from "./src/middleware/notfound.middleware.js";
@@ -6,6 +7,7 @@ import authRoutes from "./src/routes/auth.route.js";
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 
 const PORT = process.env.PORT || 5000;
     

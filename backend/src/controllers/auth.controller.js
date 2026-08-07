@@ -1,5 +1,5 @@
-import { getCurrentUser, loginUser, refreshUserToken, registerUser, } from "../services/auth.service.js";
-import { setRefreshTokenCookie } from "../utils/cookie.js";
+import { getCurrentUser, loginUser, logoutUser, refreshUserToken, registerUser, } from "../services/auth.service.js";
+import { clearRefreshTokenCookie, setRefreshTokenCookie } from "../utils/cookie.js";
 import { sendSuccess } from "../utils/response.js";
 import { loginSchema, registerSchema } from "../validations/auth.validation.js";
 
@@ -60,7 +60,7 @@ export const me = async (req, res, next) => {
       200
     );
   } catch (error) {
-    next(error);
+    return next(error);
   }
 };
 
@@ -75,9 +75,25 @@ export const refresh = async (req, res, next) => {
     return sendSuccess(
       res,
       "Token refreshed Successfully", {
-        accessToken: result.accessToken,
-      }
+      accessToken: result.accessToken,
+    }
     )
+  } catch (error) {
+    return next(error);
+  }
+};
+
+export const logout = async (req, res, next) => {
+  try {
+    await logoutUser(req.user?.id);
+
+    clearRefreshTokenCookie(res);
+
+    return sendSuccess(
+      res,
+      "Logout successfully",
+      null
+    );
   } catch (error) {
     return next(error);
   }
