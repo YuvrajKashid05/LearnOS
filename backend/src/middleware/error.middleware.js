@@ -14,6 +14,12 @@ const errorHandler = (err, req, res, next) => {
         }));
     }
 
+    console.error(err);
+
+    if (statusCode >= 500 && !(err instanceof ZodError)) {
+        message = "Internal Server Error";
+    }
+
     res.status(statusCode).json({
         success: false,
         message,

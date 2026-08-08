@@ -21,9 +21,9 @@ export const userProfile = async (req, res, next) => {
 
 export const updateUser = async (req, res, next) => {
 
-    const data = updateProfileSchema.parse(req.body);
-
     try {
+        const data = updateProfileSchema.parse(req.body);
+        
         const user = await updateProfile(
             req.user.id,
             data,
@@ -40,9 +40,9 @@ export const updateUser = async (req, res, next) => {
 };
 
 export const updateAvatar = async (req, res, next) => {
-    const data = await updateAvatarSchema.parse(req.body);
 
     try {
+        const data = await updateAvatarSchema.parse(req.body);
         const user = await updateProfile(
             req.user.id,
             {

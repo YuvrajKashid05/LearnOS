@@ -1,5 +1,5 @@
 import prisma from "../config/db.js";
-import AppError from "../utils/appError.js";
+import AppError from "../utils/AppError.js";
 import { verifyAccessToken } from "../utils/jwt.js";
 
 export const protect = async (req, res, next) => {

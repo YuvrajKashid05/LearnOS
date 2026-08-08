@@ -11,15 +11,18 @@ for (const key of requiredSecrets) {
   }
 }
 
+const ACCESS_EXPIRES = process.env.JWT_ACCESS_EXPIRES || "15m";
+const REFRESH_EXPIRES = process.env.JWT_REFRESH_EXPIRES || "7d";
+
 export const generateAccessToken = (payload) => {
   return jwt.sign(payload, process.env.JWT_ACCESS_SECRET, {
-    expiresIn: process.env.JWT_ACCESS_EXPIRES,
+    expiresIn: ACCESS_EXPIRES,
   });
 };
 
 export const generateRefreshToken = (payload) => {
   return jwt.sign(payload, process.env.JWT_REFRESH_SECRET, {
-    expiresIn: process.env.JWT_REFRESH_EXPIRES,
+    expiresIn: REFRESH_EXPIRES,
   });
 };
 
