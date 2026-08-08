@@ -82,23 +82,6 @@ export const loginUser = async ({ email, password }) => {
 
 };
 
-export const getCurrentUser = async (id) => {
-    const user = await findUserById(id);
-
-    if (!user) {
-        throw new AppError("User not found", 404);
-    }
-
-    return {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        avatar: user.avatar,
-        isVerified: user.isVerified,
-        createdAt: user.createdAt,
-    };
-};
-
 export const refreshUserToken = async (refreshToken) => {
     if (!refreshToken) {
         throw new AppError("Reresh token is required", 400);

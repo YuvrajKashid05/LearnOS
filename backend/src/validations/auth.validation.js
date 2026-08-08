@@ -36,3 +36,17 @@ export const loginSchema = z.object({
         .trim()
         .min(8, { message: "Password must be at least 8 characters long" })
 });
+
+export const updateProfileSchema = z.object({
+    name: z
+        .string()
+        .trim()
+        .min(3, {message:"Name must be at least 3 characters."})
+        .max(50, "Name is too long."),
+});
+
+export const updateAvatarSchema = z.object({
+    avatar: z
+        .string()
+        .url({ message: "Invalid avatar url" })
+});

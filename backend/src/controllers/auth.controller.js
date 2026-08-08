@@ -1,4 +1,4 @@
-import { getCurrentUser, loginUser, logoutUser, refreshUserToken, registerUser, } from "../services/auth.service.js";
+import { loginUser, logoutUser, refreshUserToken, registerUser } from "../services/auth.service.js";
 import { clearRefreshTokenCookie, setRefreshTokenCookie } from "../utils/cookie.js";
 import { sendSuccess } from "../utils/response.js";
 import { loginSchema, registerSchema } from "../validations/auth.validation.js";
@@ -44,21 +44,6 @@ export const login = async (req, res, next) => {
       201,
     );
     
-  } catch (error) {
-    return next(error);
-  }
-};
-
-export const me = async (req, res, next) => {
-  try {
-    const user = await getCurrentUser(req.user.id);
-
-    return sendSuccess(
-      res,
-      "User fetched successfully",
-      { user },
-      200
-    );
   } catch (error) {
     return next(error);
   }
