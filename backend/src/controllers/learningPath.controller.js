@@ -61,7 +61,7 @@ export const getPublishedPathsByTopicId = async (req, res, next) => {
     }
 };
 
-export const publisheLearningPath = async (req, res, next) => {
+export const publishLearningPath = async (req, res, next) => {
     try {
         const learningPath = await learningPathService.publishLearningPath(req.params.id);
 

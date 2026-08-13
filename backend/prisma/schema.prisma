@@ -8,30 +8,30 @@ datasource db {
 }
 
 model User {
-  id        Int      @id @default(autoincrement())
-  name      String
-  email     String   @unique
-  password  String
-  avatar    String?
-  isVerified Boolean  @default(false)
+  id           Int     @id @default(autoincrement())
+  name         String
+  email        String  @unique
+  password     String
+  avatar       String?
+  isVerified   Boolean @default(false)
   refreshToken String?
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
 model LearningTopic {
-  id          String   @id @default(uuid())
+  id          String           @id @default(uuid())
   name        String
-  slug        String   @unique
+  slug        String           @unique
   description String?
   thumbnail   String?
   category    String
   difficulty  TopicDifficulty?
-  status      TopicStatus @default(DRAFT)
+  status      TopicStatus      @default(DRAFT)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   publishedAt DateTime?
 
   learningPaths LearningPath[]
@@ -55,17 +55,17 @@ enum TopicDifficulty {
 }
 
 model LearningPath {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   title       String
   description String?
 
-  topicId     String
-  topic       LearningTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId String
+  topic   LearningTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
-  status      LearningPathStatus @default(DRAFT)
+  status LearningPathStatus @default(DRAFT)
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
   publishedAt DateTime?
 
   @@index([topicId])

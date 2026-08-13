@@ -46,7 +46,7 @@ export const findPublishedPathsByTopicId = async (topicId) => {
 export const publishLearningPathStatus = async (id, status) => {
     return prisma.learningPath.update({
         where: {
-            id
+            id,
         },
         data: {
             status,
