@@ -57,5 +57,3 @@ export const publishLearningPathStatus = async (id, status) => {
         },
     });
 };
-
-
