@@ -1,0 +1,43 @@
+import * as topicRepo from "../repositories/topic.repositories.js";
+import AppError from "../utils/AppError.js";
+
+export const createTopic = async (data) => {
+    const existingTopic = await topicRepo.findTopicBySlug(data.slug);
+
+    if (existingTopic) {
+        throw new AppError("Topic with this slug is already exists", 409);
+    }
+
+    return topicRepo.createTopic({
+        ...data,
+        slug: data.slug.toLowerCase(),
+    });
+};
+
+export const getPublishedTopics = async () => {
+    return topicRepo.findPublishedTopics();
+};
+
+export const getTopicById = async (id) => {
+    const topic = await topicRepo.findTopicById(id);
+
+    if (!topic) {
+        throw new AppError("Topic not found", 404);
+    }
+
+    return topic;
+};
+
+export const publishTopic = async (id,status) => {
+    const topic = await topicRepo.findTopicById(id);
+
+    if (!topic) {
+        throw new AppError("Topic not found", 404);
+    }
+
+    if (topic.status === "PUBLISHED") {
+        throw new AppError("Topic is already published", 409)
+    }
+
+    return await topicRepo.updateTopicStatus(id,"PUBLISHED");
+};
