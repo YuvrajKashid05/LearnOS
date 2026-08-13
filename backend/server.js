@@ -5,6 +5,7 @@ import errorHandler from "./src/middleware/error.middleware.js";
 import notfoundError from "./src/middleware/notfound.middleware.js";
 import { authLimiter } from "./src/middleware/rateLimiter.middleware.js";
 import authRoutes from "./src/routes/auth.routes.js";
+import learningPathRoutes from "./src/routes/learningPath.routes.js";
 import topicRoutes from "./src/routes/topic.routes.js";
 import userRoutes from "./src/routes/user.routes.js";
 
@@ -19,6 +20,7 @@ const PORT = process.env.PORT || 5000;
 app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/users", userRoutes)
 app.use("/api/topics", topicRoutes);
+app.use("/api/learning-path", learningPathRoutes);
 
 app.use(notfoundError);
 app.use(errorHandler);  

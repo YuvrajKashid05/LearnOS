@@ -34,6 +34,8 @@ model LearningTopic {
   updatedAt   DateTime @updatedAt
   publishedAt DateTime?
 
+  learningPaths LearningPath[]
+
   @@index([category])
   @@index([status])
   @@index([name])
@@ -52,3 +54,27 @@ enum TopicDifficulty {
   ADVANCED
 }
 
+model LearningPath {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+
+  topicId     String
+  topic       LearningTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  status      LearningPathStatus @default(DRAFT)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  publishedAt DateTime?
+
+  @@index([topicId])
+  @@index([status])
+}
+
+enum LearningPathStatus {
+  DRAFT
+  PROCESSING
+  PUBLISHED
+  ARCHIVED
+}
