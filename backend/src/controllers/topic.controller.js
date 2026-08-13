@@ -61,3 +61,19 @@ export const publishTopic = async (req, res, next) => {
         return next(error);
     }
 };
+
+export const searchTopics = async (req, res, next) => {
+    try {
+        const searchTerm = req.query.q;
+
+        const topics = await topicService.searchTopics(searchTerm);
+
+        return sendSuccess(
+            res,
+            null,
+            topics
+        );
+    } catch (error) {
+        return next(error);
+    }
+};

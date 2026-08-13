@@ -41,3 +41,16 @@ export const publishTopic = async (id,status) => {
 
     return await topicRepo.updateTopicStatus(id,"PUBLISHED");
 };
+
+export const searchTopics = async (searchTerm) => {
+    const trimmedSearchTerm = searchTerm.trim();
+
+    if (!trimmedSearchTerm) {
+        throw new AppError(
+            "Search term is required",
+            400,
+        );
+    }
+
+    return await topicRepo.searchPublishedTopics(trimmedSearchTerm);
+};

@@ -44,3 +44,36 @@ export const updateTopicStatus = async (id, status) => {
         },
     });
 };
+
+export const searchPublishedTopics = async (searchTerm) => {
+    return prisma.learningTopic.findMany({
+        where: {
+            status: "PUBLISHED",
+
+            OR: [
+                {
+                    name: {
+                        contains: searchTerm,
+                        mode: "insensitive",
+                    },
+                },
+                {
+                    description: {
+                        contains: searchTerm,
+                        mode: "insensitive",
+                    },
+                },
+                {
+                    category: {
+                        contains: searchTerm,
+                        mode: "insensitive",
+                    },
+                },
+            ],
+        },
+
+        orderBy: {
+            name: "asc",
+        },
+    });
+};
