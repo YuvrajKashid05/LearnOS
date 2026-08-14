@@ -64,6 +64,8 @@ model LearningPath {
 
   status LearningPathStatus @default(DRAFT)
 
+  lessons     LearningPathLesson[]
+
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   publishedAt DateTime?
@@ -77,4 +79,21 @@ enum LearningPathStatus {
   PROCESSING
   PUBLISHED
   ARCHIVED
+}
+
+model LearningPathLesson {
+  id         String @id @default(uuid())
+
+  learningPathId  String
+  learningPath    LearningPath @relation(fields: [learningPathId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?  
+  order       Int
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([learningPathId, order])
+  @@index([learningPathId]) 
 }
