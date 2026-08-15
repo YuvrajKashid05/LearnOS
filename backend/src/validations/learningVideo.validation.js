@@ -47,3 +47,44 @@ export const createVideoSchema = z.object({
         .optional(),
     
 });
+
+export const updateVideoAnalysisSchema = z.object({
+    relevanceScore: z
+        .number()
+        .min(0)
+        .max(100),
+
+    qualityScore: z
+        .number()
+        .min(0)
+        .max(100),
+
+    difficultyScore: z
+        .number()
+        .min(0)
+        .max(100),
+    
+    aiSummary: z
+        .string()
+        .trim()
+        .max(5000)
+        .optional(),
+
+    status: z.enum([
+        
+        "PENDING",
+        "ANALYZING",
+        "APPROVED",
+        "REJECTED",
+    ]),
+});
+
+export const updateVideoStatusSchema = z.object({
+  status: z.enum([
+    "PENDING",
+    "ANALYZING",
+    "APPROVED",
+    "REJECTED",
+  ]),
+});
+

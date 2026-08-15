@@ -1,5 +1,5 @@
-import * as learningPathRepo from "../repositories/learningPath.repositories.js";
-import * as lessonRepo from "../repositories/learningPathLesson.repositories.js";
+import * as learningPathRepo from "../repositories/learningPath.repository.js";
+import * as lessonRepo from "../repositories/learningPathLesson.repository.js";
 import AppError from "../utils/AppError.js";
 
 export const createLesson = async (data) => {

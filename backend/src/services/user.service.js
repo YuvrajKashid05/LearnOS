@@ -1,4 +1,4 @@
-import { deleteUserProfile, getUserProfile, updateUserProfile } from "../repositories/user.repositories.js";
+import { deleteUserProfile, getUserProfile, updateUserProfile } from "../repositories/user.repository.js";
 import AppError from "../utils/AppError.js";
 
 export const getProfile = async (id) => {

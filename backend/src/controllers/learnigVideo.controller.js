@@ -1,6 +1,6 @@
 import * as videoService from "../services/learnigVideo.service.js";
 import { sendSuccess } from "../utils/response.js";
-import { createVideoSchema } from "../validations/learningVideo.validation.js";
+import { createVideoSchema, updateVideoAnalysisSchema, updateVideoStatusSchema } from "../validations/learningVideo.validation.js";
 
 export const createVideo = async (req, res, next) => {
     try {
@@ -54,6 +54,38 @@ export const getApprovedVideosByLessonId = async (req, res, next) => {
             res,
             null,
             videos,
+        );
+    } catch (error) {
+        return next(error);
+    }
+};
+
+export const updateVideoAnalysis = async (req, res, next) => {
+    try {
+        const validatedData = updateVideoAnalysisSchema.parse(req.body);
+
+        const video = await videoService.updateVideoAnalysis(req.params.id,validatedData);
+
+        return sendSuccess(
+            res,
+            null,
+            video
+        );
+    } catch (error) {
+        return next(error);
+    }
+};
+
+export const updateVideoStatus = async (req, res, next) => {
+    try {
+        const validatedData = updateVideoStatusSchema.parse(req.body);
+
+        const video = await videoService.updateVideoStatus(req.params.id, validatedData.status);
+
+        return sendSuccess(
+            res,
+            null,
+            video
         );
     } catch (error) {
         return next(error);

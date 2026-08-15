@@ -1,5 +1,5 @@
-import * as learningPathRepo from "../repositories/learningPath.repositories.js";
-import * as topicRepo from "../repositories/topic.repositories.js";
+import * as learningPathRepo from "../repositories/learningPath.repository.js";
+import * as topicRepo from "../repositories/topic.repository.js";
 import AppError from "../utils/AppError.js";
 
 export const createLearningPath = async (data) => {

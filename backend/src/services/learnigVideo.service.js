@@ -1,5 +1,5 @@
-import * as videoRepo from "../repositories/learnigVideo.repositories.js";
-import * as lessonRepo from "../repositories/learningPathLesson.repositories.js";
+import * as videoRepo from "../repositories/learnigVideo.repository.js";
+import * as lessonRepo from "../repositories/learningPathLesson.repository.js";
 import AppError from "../utils/AppError.js";
 
 export const createVideo = async (data) => {
@@ -68,4 +68,41 @@ export const getApprovedVideosByLessonId = async (lessonId) => {
     }
 
     return videoRepo.findApprovedVideoByLessonId(lessonId);
+};
+
+export const updateVideoAnalysis = async (id, data) => {
+    const video = await videoRepo.findVideoById(id);
+
+    if (!video) {
+        throw new AppError(
+            "Video not found",
+            404
+        );
+    }
+
+    return videoRepo.updateVideoAnalysis(id, data);
+};
+
+export const updateVideoStatus = async (id, status) => {
+    const video = await videoRepo.findVideoById(id);
+
+    if (!video) {
+        throw new AppError(
+            "Video not found",
+            404
+        );
+    }
+
+    if (status === "APPROVED") {
+        if (
+            video.relevanceScore === null ||
+            video.qualityScore === null
+        ) {
+            throw new Error(
+                "Video must be analyzed before approval"
+            );
+        }
+    }
+
+    return videoRepo.updateVideoStatus(id,status);
 };

@@ -16,6 +16,8 @@ model User {
   isVerified   Boolean @default(false)
   refreshToken String?
 
+  learningProgress UserVideoProgress[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -125,6 +127,7 @@ model LearningVideo {
 
   status         VideoStatus @default(PENDING)
 
+  progress       UserVideoProgress[]
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
@@ -137,4 +140,29 @@ enum VideoStatus {
   ANALYZING
   APPROVED
   REJECTED
+}
+
+model UserVideoProgress {
+  id        String @id @default(uuid())
+
+  userId     Int
+  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  videoId    String
+  video      LearningVideo @relation(fields :[videoId], references: [id], onDelete: Cascade)
+
+  watchedSeconds  Int @default(0)
+
+  progressPercentage  Float @default(0)
+
+  isCompleted  Boolean @default(false)
+
+  lastWatchedAt DateTime?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([userId, videoId])
+  @@index([userId])
+  @@index([videoId])
 }

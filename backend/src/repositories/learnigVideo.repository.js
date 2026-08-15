@@ -55,3 +55,30 @@ export const findApprovedVideoByLessonId = async (lessonId) => {
         ],
     });
 };
+
+export const updateVideoAnalysis = async (id, data) => {
+    return prisma.learningVideo.update({
+        where: {
+            id,
+        },
+        data: {
+            relevanceScore:data.relevanceScore,
+            qualityScore:data.qualityScore,
+            difficultyScore:data.difficultyScore,
+            aiSummary:data.aiSummary,
+            status:data.status
+        },
+    });
+};
+
+export const updateVideoStatus = async (id, status) => {
+  return prisma.learningVideo.update({
+    where: {
+      id,
+    },
+    data: {
+      status,
+    },
+  });
+};
+

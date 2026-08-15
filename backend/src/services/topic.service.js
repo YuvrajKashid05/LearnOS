@@ -1,4 +1,4 @@
-import * as topicRepo from "../repositories/topic.repositories.js";
+import * as topicRepo from "../repositories/topic.repository.js";
 import AppError from "../utils/AppError.js";
 
 export const createTopic = async (data) => {

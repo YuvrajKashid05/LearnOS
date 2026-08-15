@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { createUser, findUserByEmail, findUserById, updateRefreshToken } from "../repositories/user.repositories.js";
+import { createUser, findUserByEmail, findUserById, updateRefreshToken } from "../repositories/user.repository.js";
 import AppError from "../utils/AppError.js";
 import { compareTokenHashes, generateAccessToken, generateRefreshToken, hashToken, verifyRefreshToken } from "../utils/jwt.js";
 
