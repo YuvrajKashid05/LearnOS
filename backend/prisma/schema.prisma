@@ -91,9 +91,50 @@ model LearningPathLesson {
   description String?  
   order       Int
 
+  videos      LearningVideo[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@unique([learningPathId, order])
   @@index([learningPathId]) 
+}
+
+model LearningVideo {
+  id        String @id @default(uuid())
+
+  lessonId  String
+  lesson LearningPathLesson@relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  
+  youtubeVideoId String @unique
+  title          String
+  description    String?
+  thumbnailUrl   String?
+  channelName    String?
+  channelId      String?
+
+  durationSeconds Int?
+
+  transcriptUrl   String?
+
+  relevanceScore  Float?
+  qualityScore    Float?
+  difficultyScore Float?
+  
+  aiSummary      String?
+
+  status         VideoStatus @default(PENDING)
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([lessonId])
+  @@index([status])
+}
+
+enum VideoStatus {
+  PENDING
+  ANALYZING
+  APPROVED
+  REJECTED
 }

@@ -5,6 +5,7 @@ import errorHandler from "./src/middleware/error.middleware.js";
 import notfoundError from "./src/middleware/notfound.middleware.js";
 import { authLimiter } from "./src/middleware/rateLimiter.middleware.js";
 import authRoutes from "./src/routes/auth.routes.js";
+import videoRoutes from "./src/routes/learnigVideo.routes.js";
 import learningPathRoutes from "./src/routes/learningPath.routes.js";
 import learningPathLessonsRoutes from "./src/routes/learningPathLesson.routes.js";
 import topicRoutes from "./src/routes/topic.routes.js";
@@ -23,6 +24,7 @@ app.use("/api/users", userRoutes)
 app.use("/api/topics", topicRoutes);
 app.use("/api/learning-path", learningPathRoutes);
 app.use("/api/learning-path-lessons", learningPathLessonsRoutes);
+app.use("/api/learning-videos", videoRoutes);
 
 app.use(notfoundError);
 app.use(errorHandler);  
