@@ -6,15 +6,35 @@ export const createTopic = async (data) => {
     });
 };
 
-export const findPublishedTopics = async () => {
-    return prisma.learningTopic.findMany({
-        where: {
-            status: "PUBLISHED"
-        },
-        orderBy: {
-            createdAt: "desc",
-        },
-    });
+export const findPublishedTopics = async ({
+    page,
+    limit,
+}) => {
+    const skip = (page - 1) * limit;
+
+    const [topics, total] = await Promise.all([
+        prisma.learningTopic.findMany({
+            where: {
+                status: "PUBLISHED",
+            },
+            skip,
+            take: limit,
+            orderBy: {
+                name: "asc",
+            },
+        }),
+
+        prisma.learningTopic.count({
+            where: {
+                status: "PUBLISHED",
+            },
+        }),
+    ]);
+
+    return {
+        topics,
+        total,
+    };
 };
 
 export const findTopicById = async (id) => {

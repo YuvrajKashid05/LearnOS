@@ -14,8 +14,21 @@ export const createTopic = async (data) => {
     });
 };
 
-export const getPublishedTopics = async () => {
-    return topicRepo.findPublishedTopics();
+export const getPublishedTopics = async (page,limit) => {
+    const { topics, total } = await topicRepo.findPublishedTopics({
+        page,
+        limit
+    });
+
+    return {
+        topics,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPage: Math.ceil(total / limit),
+        },
+    };
 };
 
 export const getTopicById = async (id) => {

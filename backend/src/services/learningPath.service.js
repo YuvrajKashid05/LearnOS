@@ -88,6 +88,15 @@ export const publishLearningPath = async (id) => {
 };
 
 export const getPublishedPathsWithLessons = async (topicId) => {
+    const topic = await topicRepo.findTopicById(topicId);
+
+    if (!topic) {
+        throw new AppError(
+            "Learning topic not found",
+            404
+        );
+    }
+
     const paths = await learningPathRepo.findPublishedPathsWithLessons(topicId);
 
     return paths;

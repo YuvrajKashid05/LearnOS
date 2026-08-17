@@ -1,4 +1,5 @@
 import * as topicService from "../services/topic.service.js";
+import AppError from "../utils/AppError.js";
 import { sendSuccess } from "../utils/response.js";
 import { createTopicSchema } from "../validations/topic.validation.js";
 
@@ -22,12 +23,29 @@ export const createTopic = async (req, res, next) => {
 
 export const getPublishedTopics = async (req, res, next) => {
     try {
-        const topics = await topicService.getPublishedTopics();
+        const page = Number.parseInt(req.query.page) || 1;
+        const limit = Number.parseInt(req.query.limit) || 4;
+
+        if (page < 1) {
+            throw new AppError(
+                "Page must be greater than 0",
+                400
+            );
+        }
+
+        if (limit < 1 || limit > 50) {
+            throw new AppError(
+                "Limit must be between 1 to 50",
+                400
+            );
+        }
+
+        const result = await topicService.getPublishedTopics(page, limit);
 
         return sendSuccess(
             res,
             null,
-            topics
+            result
         );
     } catch (error) {
         return next(error);
