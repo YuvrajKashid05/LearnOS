@@ -74,3 +74,17 @@ export const publishLearningPath = async (req, res, next) => {
         return next(error);
     }
 };
+
+export const getPublishedPathsWithLessons = async (req, res, next) => {
+    try {
+        const paths = await learningPathService.getPublishedPathsWithLessons(req.params.topicId);
+
+        return sendSuccess(
+            res,
+            null,
+            paths,
+        );
+    } catch (error) {
+        return next(error)
+    }
+};

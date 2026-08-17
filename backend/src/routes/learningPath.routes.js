@@ -4,6 +4,7 @@ import {
     getLearningPathById,
     getLearningPathsByTopicId,
     getPublishedPathsByTopicId,
+    getPublishedPathsWithLessons,
     publishLearningPath
 } from "../controllers/learningPath.controller.js";
 
@@ -15,5 +16,7 @@ router.get("/topic/:topicId/published", getPublishedPathsByTopicId);
 router.get("/topic/:topicId", getLearningPathsByTopicId);
 router.patch("/:id/publish", publishLearningPath);
 router.get("/:id", getLearningPathById);
+
+router.get("/topic/:topicId/content",getPublishedPathsWithLessons);
 
 export default router;

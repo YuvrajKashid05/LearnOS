@@ -57,3 +57,41 @@ export const publishLearningPathStatus = async (id, status) => {
         },
     });
 };
+
+export const findPublishedPathsWithLessons = async (topicId) => {
+    return prisma.learningPath.findMany({
+        where: {
+            topicId,
+            status: "PUBLISHED",
+        },
+
+        include: {
+            lessons: {
+                orderBy: {
+                    order: "asc",
+                },
+
+                include: {
+                    videos: {
+                        where: {
+                            status: "APPROVED",
+                        },
+
+                        orderBy: [
+                            {
+                                relevanceScore: "desc",
+                            },
+                            {
+                                qualityScore: "desc",
+                            },
+                        ],
+                    },
+                },
+            },
+        },
+
+        orderBy: {
+            createdAt: "desc",
+        },
+    });
+};

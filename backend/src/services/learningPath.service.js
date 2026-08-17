@@ -86,3 +86,9 @@ export const publishLearningPath = async (id) => {
         "PUBLISHED"
     );
 };
+
+export const getPublishedPathsWithLessons = async (topicId) => {
+    const paths = await learningPathRepo.findPublishedPathsWithLessons(topicId);
+
+    return paths;
+};
