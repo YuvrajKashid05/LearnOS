@@ -101,3 +101,106 @@ export const getPublishedPathsWithLessons = async (topicId) => {
 
     return paths;
 };
+
+export const getPublishedLearningPathDetails = async (id) => {
+    const learningPath = await learningPathRepo.findPublishedLearningPathDetails(id);
+
+    if (!learningPath) {
+        throw new AppError(
+            "Learning path not found or not available",
+            404
+        );
+    }
+
+    return learningPath;
+};
+
+export const getLearningPathPlayer = async (learningPathId, userId) => {
+    const learningPath =
+        await learningPathRepo.findLearningPathForPlayer(
+            learningPathId,
+            userId
+        );
+
+    if (!learningPath) {
+        throw new AppError(
+            "Learning path not found or not available",
+            404
+        );
+    }
+
+    let currentVideo = null;
+    let completedVideos = 0;
+    let totalVideos = 0;
+
+    const lessons = learningPath.lessons.map((lesson) => {
+        const videos = lesson.videos.map((video) => {
+            totalVideos++;
+
+            const progress = video.progress[0] || null;
+
+            if (progress?.isCompleted) {
+                completedVideos++;
+            }
+
+            const videoData = {
+                id: video.id,
+                youtubeVideoId: video.youtubeVideoId,
+                title: video.title,
+                description: video.description,
+                thumbnailUrl: video.thumbnailUrl,
+                channelName: video.channelName,
+                durationSeconds: video.durationSeconds,
+                relevanceScore: video.relevanceScore,
+                qualityScore: video.qualityScore,
+
+                progress: progress
+                    ? {
+                        watchedSeconds: progress.watchedSeconds,
+                        progressPercentage:
+                            progress.progressPercentage,
+                        isCompleted: progress.isCompleted,
+                        lastWatchedAt: progress.lastWatchedAt,
+                    }
+                    : null,
+            };
+
+            if (!currentVideo && !progress?.isCompleted) {
+                currentVideo = videoData;
+            }
+
+            return videoData;
+        });
+
+        return {
+            id: lesson.id,
+            title: lesson.title,
+            description: lesson.description,
+            order: lesson.order,
+            videos,
+        };
+    });
+
+    const progressPercentage =
+        totalVideos > 0
+            ? (completedVideos / totalVideos) * 100
+            : 0;
+
+    return {
+        id: learningPath.id,
+        title: learningPath.title,
+        description: learningPath.description,
+
+        topic: learningPath.topic,
+
+        progress: {
+            completedVideos,
+            totalVideos,
+            progressPercentage,
+        },
+
+        currentVideo,
+
+        lessons,
+    };
+};

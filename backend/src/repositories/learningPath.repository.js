@@ -95,3 +95,101 @@ export const findPublishedPathsWithLessons = async (topicId) => {
         },
     });
 };
+
+export const findPublishedLearningPathDetails = async (id) => {
+    return prisma.learningPath.findFirst({
+        where: {
+            id,
+            status: "PUBLISHED",
+            topic: {
+                status: "PUBLISHED",
+            },
+        },
+        include: {
+            topic: {
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    thumbnail: true,
+                },
+            },
+
+            lessons: {
+                orderBy: {
+                    order: "asc",
+                },
+
+                include: {
+                    videos: {
+                        where: {
+                            status: "APPROVED",
+                        },
+
+                        orderBy: [
+                            {
+                                relevanceScore: "desc",
+                            },
+                            {
+                                qualityScore: "desc",
+                            },
+                        ],
+                    },
+                },
+            },
+        },
+    });
+};
+
+export const findLearningPathForPlayer = async (learningPathId, userId) => {
+    return prisma.learningPath.findFirst({
+        where: {
+            id: learningPathId,
+            status: "PUBLISHED",
+            topic: {
+                status: "PUBLISHED"
+            },
+        },
+
+        include: {
+            topic: {
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    thumbnail: true,
+                },
+            },
+
+            lessons: {
+                orderBy: {
+                    order: "asc"
+                },
+                include: {
+                    videos: {
+                        where: {
+                            status: "APPROVED",
+                        },
+
+                        orderBy: [
+                            {
+                                relevanceScore: "desc"
+                            },
+                            {
+                                qualityScore: "desc"
+                            }
+                        ],
+
+                        include: {
+                            progress: {
+                                where: {
+                                    userId
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    });
+};

@@ -88,3 +88,33 @@ export const getPublishedPathsWithLessons = async (req, res, next) => {
         return next(error)
     }
 };
+
+export const getPublihshedLearningPathDeatails = async (req, res, next) => {
+    try {
+        const paths = await learningPathService.getPublishedLearningPathDetails(req.params.id);
+
+        return sendSuccess(
+            res,
+            null,
+            paths
+        );
+
+
+    } catch (error) {
+        return next(error);
+    }
+};
+
+export const getLearningPathForPlayer = async (req, res, next) => {
+    try {
+        const learningPath = await learningPathService.getLearningPathPlayer(req.params.id, req.user.id);
+
+        return sendSuccess(
+            res,
+            null,
+            learningPath
+        );
+    } catch (error) {
+        return next(error);
+    }
+};

@@ -38,6 +38,10 @@ export const getTopicById = async (id) => {
         throw new AppError("Topic not found", 404);
     }
 
+    if (topic.status !== "PUBLISHED") {
+        throw new AppError("Topic is not published", 400);
+    }
+
     return topic;
 };
 
