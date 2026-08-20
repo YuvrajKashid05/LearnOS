@@ -13,9 +13,9 @@ export const startTopicPipeline = async (topicId) => {
         );
     }
 
-    if (topic.status !== "PUBLISHED") {
+    if (topic.status == "PUBLISHED") {
         throw new AppError(
-            "Only published topis can start the pipeline",
+            "Pipeline cannot run for alreay published topic",
             400
         );
     }

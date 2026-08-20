@@ -39,7 +39,7 @@ export const findActivePipelineJobByTopicId = async (topicId) => {
     });
 };
 
-export const updatePipelineJob = async (id) => {
+export const updatePipelineJob = async (id,data) => {
     return prisma.pipelineJob.update({
         where: {
             id
