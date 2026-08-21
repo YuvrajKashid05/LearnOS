@@ -1,5 +1,5 @@
 import express from "express";
-import { getPipelineJob, startPipeline } from "../controllers/pipeline.controller";
+import { getPipelineJob, startPipeline } from "../controllers/pipeline.controller.js";
 
 const router = express.Router();
 

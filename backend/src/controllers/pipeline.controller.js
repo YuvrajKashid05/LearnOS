@@ -1,6 +1,6 @@
 import * as pipelineService from "../services/pipeline.service.js";
-import sendSuccess from "../utils/response.js";
-import { startPiplineSchema } from "../validations/pipeline.validation";
+import { sendSuccess } from "../utils/response.js";
+import { startPiplineSchema } from "../validations/pipeline.validation.js";
 
 export const startPipeline = async (req, res, next) => {
     try {

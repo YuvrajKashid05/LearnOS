@@ -1,7 +1,8 @@
+import redisConnection from "../config/redis.js";
 import { videoPipelineQueue } from "./videoPipeline.queue.js";
 
-export const addVideoPipelineJob = async ({pipelineJobId,topicId}) => {
-    return videoPipelineQueue.add(
+export const addVideoPipelineJob = async ({ pipelineJobId, topicId }) => {
+    const job = await videoPipelineQueue.add(
         "process-topic",
         {
             pipelineJobId,
@@ -11,4 +12,14 @@ export const addVideoPipelineJob = async ({pipelineJobId,topicId}) => {
             jobId: pipelineJobId,
         }
     );
+
+    await redisConnection.rpush(
+        "learnos:pipeline:jobs",
+        JSON.stringify({
+            pipelineJobId,
+            topicId,
+        })
+    );
+
+    return job;
 };

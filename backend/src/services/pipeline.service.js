@@ -1,4 +1,4 @@
-import { addVideoPipelineJob } from "../queues/videoPipeline.producer";
+import { addVideoPipelineJob } from "../queues/videoPipeline.producer.js";
 import * as pipelineRepo from "../repositories/pipeline.repository.js";
 import * as topicRepo from "../repositories/topic.repository.js";
 import AppError from "../utils/AppError.js";
