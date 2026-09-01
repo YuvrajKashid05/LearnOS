@@ -15,7 +15,7 @@ ai-pipeline/__pycache__/
 ai-pipeline/**/__pycache__/
 *.py[cod]
 __pycache__/
-
+venv
 # Python environment
 ai-pipeline/.env
 
