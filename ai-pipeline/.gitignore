@@ -1,0 +1,32 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+
+# Python
+ai-pipeline/venv/
+ai-pipeline/__pycache__/
+ai-pipeline/**/__pycache__/
+*.py[cod]
+__pycache__/
+
+# Python environment
+ai-pipeline/.env
+
+# Build / cache
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

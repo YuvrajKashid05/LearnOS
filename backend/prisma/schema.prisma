@@ -68,7 +68,7 @@ model LearningPath {
 
   status LearningPathStatus @default(DRAFT)
 
-  lessons     LearningPathLesson[]
+  lessons LearningPathLesson[]
 
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -86,31 +86,31 @@ enum LearningPathStatus {
 }
 
 model LearningPathLesson {
-  id         String @id @default(uuid())
+  id String @id @default(uuid())
 
-  learningPathId  String
-  learningPath    LearningPath @relation(fields: [learningPathId], references: [id], onDelete: Cascade)
+  learningPathId String
+  learningPath   LearningPath @relation(fields: [learningPathId], references: [id], onDelete: Cascade)
 
   title       String
-  description String?  
+  description String?
   order       Int
 
-  videos      LearningVideo[]
+  videos LearningVideo[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([learningPathId, order])
-  @@index([learningPathId]) 
+  @@index([learningPathId])
 }
 
 model LearningVideo {
-  id        String @id @default(uuid())
+  id String @id @default(uuid())
 
-  lessonId  String
-  lesson LearningPathLesson@relation(fields: [lessonId], references: [id], onDelete: Cascade)
-  
-  youtubeVideoId String @unique
+  lessonId String
+  lesson   LearningPathLesson @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  youtubeVideoId String  @unique
   title          String
   description    String?
   thumbnailUrl   String?
@@ -119,19 +119,19 @@ model LearningVideo {
 
   durationSeconds Int?
 
-  transcriptUrl   String?
+  transcriptUrl String?
 
   relevanceScore  Float?
   qualityScore    Float?
   difficultyScore Float?
-  
-  aiSummary      String?
 
-  status         VideoStatus @default(PENDING)
+  aiSummary String?
 
-  progress       UserVideoProgress[]
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  status VideoStatus @default(PENDING)
+
+  progress  UserVideoProgress[]
+  createdAt DateTime            @default(now())
+  updatedAt DateTime            @updatedAt
 
   @@index([lessonId])
   @@index([status])
@@ -145,24 +145,24 @@ enum VideoStatus {
 }
 
 model UserVideoProgress {
-  id        String @id @default(uuid())
+  id String @id @default(uuid())
 
-  userId     Int
-  user       User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  videoId    String
-  video      LearningVideo @relation(fields :[videoId], references: [id], onDelete: Cascade)
+  videoId String
+  video   LearningVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
 
-  watchedSeconds  Int @default(0)
+  watchedSeconds Int @default(0)
 
-  progressPercentage  Float @default(0)
+  progressPercentage Float @default(0)
 
-  isCompleted  Boolean @default(false)
+  isCompleted Boolean @default(false)
 
   lastWatchedAt DateTime?
 
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([userId, videoId])
   @@index([userId])
@@ -170,17 +170,19 @@ model UserVideoProgress {
 }
 
 model PipelineJob {
-  id        String @id @default(uuid())
+  id String @id @default(uuid())
 
-  topicId   String
-  topic     LearningTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  topicId String
+  topic   LearningTopic @relation(fields: [topicId], references: [id], onDelete: Cascade)
 
-  status    PipelineJobStatus @default(PENDING)
+  status PipelineJobStatus @default(PENDING)
 
-  progress   Int @default(0)
+  progress Int @default(0)
 
-  startedAt DateTime?
+  startedAt   DateTime?
   completedAt DateTime?
+
+  candidates PipelineVideoCandidate[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -189,10 +191,53 @@ model PipelineJob {
   @@index([status])
 }
 
-enum PipelineJobStatus{
+enum PipelineJobStatus {
   PENDING
   QUEUED
   PROCESSING
   COMPLETED
   FAILED
+}
+
+model PipelineVideoCandidate {
+  id String @id @default(uuid())
+
+  pipelineJobId String
+  pipelineJob   PipelineJob @relation(fields: [pipelineJobId], references: [id], onDelete: Cascade)
+
+  youtubeVideoId String
+
+  title        String
+  description  String?
+  thumbnailUrl String?
+
+  channelName String?
+  channelId   String?
+
+  publishedAt DateTime?
+
+  durationSeconds Int?
+
+  viewCount    Int @default(0)
+  likeCount    Int @default(0)
+  commentCount Int @default(0)
+
+  metadataScore Float?
+  aiScore       Float?
+  aiConfidence  Float?
+  finalScore    Float?
+
+  rank Int?
+
+  transcriptAvailable Boolean @default(false)
+  transcriptText      String?
+
+  transcriptError String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([pipelineJobId, youtubeVideoId])
+  @@index([pipelineJobId])
+  @@index([finalScore])
 }

@@ -1,0 +1,6 @@
+redis
+python-dotenv
+requests
+psycopg2-binary
+youtube-transcript-api
+google-genai
