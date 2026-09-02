@@ -14,12 +14,20 @@ model User {
   password     String
   avatar       String?
   isVerified   Boolean @default(false)
+  role         UserRole @default(STUDENT)
   refreshToken String?
 
   learningProgress UserVideoProgress[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+enum UserRole {
+  STUDENT
+  ADMIN
+  EDITOR
+  DEVELOPER
 }
 
 model LearningTopic {

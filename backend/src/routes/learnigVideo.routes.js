@@ -1,16 +1,33 @@
 import express from "express";
-import { createVideo, getApprovedVideosByLessonId, getVideoById, getVideosByLessonId, updateVideoAnalysis, updateVideoStatus } from "../controllers/learnigVideo.controller.js";
+import {
+    createVideo,
+    getApprovedVideosByLessonId,
+    getVideoById,
+    getVideosByLessonId,
+    updateVideoAnalysis,
+    updateVideoStatus,
+} from "../controllers/learnigVideo.controller.js";
 
+import { protect } from "../middleware/auth.middleware.js";
+import { authorizeRoles } from "../middleware/role.middleware.js";
 
 const router = express.Router();
 
-router.post("/", createVideo);
+const contentManagers = authorizeRoles(
+    "ADMIN",
+    "EDITOR",
+    "DEVELOPER"
+);
 
-router.get("/lesson/:lessonId/approved", getApprovedVideosByLessonId);
-router.get("/lesson/:lessonId", getVideosByLessonId);
+router.post("/",protect,contentManagers,createVideo);
 
-router.patch("/:id/analysis", updateVideoAnalysis);
-router.patch("/:id/status", updateVideoStatus);
+router.get("/lesson/:lessonId/approved",getApprovedVideosByLessonId);
+
+router.get("/lesson/:lessonId", protect, contentManagers, getVideosByLessonId);
+
+router.patch("/:id/analysis", protect, contentManagers, updateVideoAnalysis);
+
+router.patch("/:id/status", protect, contentManagers, updateVideoStatus);
 
 router.get("/:id", getVideoById);
 

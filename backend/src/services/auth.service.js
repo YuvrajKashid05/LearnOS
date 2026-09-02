@@ -1,16 +1,36 @@
 import bcrypt from "bcrypt";
-import { createUser, findUserByEmail, findUserById, updateRefreshToken } from "../repositories/user.repository.js";
+
+import {
+    createUser,
+    findUserByEmail,
+    findUserById,
+    updateRefreshToken,
+} from "../repositories/user.repository.js";
+
 import AppError from "../utils/AppError.js";
-import { compareTokenHashes, generateAccessToken, generateRefreshToken, hashToken, verifyRefreshToken } from "../utils/jwt.js";
+
+import {
+    compareTokenHashes,
+    generateAccessToken,
+    generateRefreshToken,
+    hashToken,
+    verifyRefreshToken,
+} from "../utils/jwt.js";
 
 export const registerUser = async (data) => {
     const existingUser = await findUserByEmail(data.email);
 
     if (existingUser) {
-        throw new AppError("User with this email already exists", 409);
+        throw new AppError(
+            "User with this email already exists",
+            409
+        );
     }
 
-    const hashedPassword = await bcrypt.hash(data.password, 10);
+    const hashedPassword = await bcrypt.hash(
+        data.password,
+        10
+    );
 
     const user = await createUser({
         ...data,
@@ -22,11 +42,16 @@ export const registerUser = async (data) => {
         email: user.email,
     };
 
-    const accessToken = generateAccessToken(payload);
+    const accessToken =
+        generateAccessToken(payload);
 
-    const refreshToken = generateRefreshToken(payload);
+    const refreshToken =
+        generateRefreshToken(payload);
 
-    await updateRefreshToken(user.id, hashToken(refreshToken));
+    await updateRefreshToken(
+        user.id,
+        hashToken(refreshToken)
+    );
 
     return {
         user: {
@@ -35,6 +60,7 @@ export const registerUser = async (data) => {
             email: user.email,
             avatar: user.avatar,
             isVerified: user.isVerified,
+            role: user.role,
             createdAt: user.createdAt,
         },
         accessToken,
@@ -42,29 +68,47 @@ export const registerUser = async (data) => {
     };
 };
 
-export const loginUser = async ({ email, password }) => {
+export const loginUser = async ({
+    email,
+    password,
+}) => {
     const user = await findUserByEmail(email);
 
     if (!user) {
-        throw new AppError("invalid email or password", 401);
+        throw new AppError(
+            "Invalid email or password",
+            401
+        );
     }
 
-    const isPassMatch = await bcrypt.compare(password, user.password);
+    const isPassMatch =
+        await bcrypt.compare(
+            password,
+            user.password
+        );
 
     if (!isPassMatch) {
-        throw new AppError("invalid email or password", 401);
+        throw new AppError(
+            "Invalid email or password",
+            401
+        );
     }
 
     const payload = {
         id: user.id,
         email: user.email,
-    }
+    };
 
-    const accessToken = generateAccessToken(payload);
+    const accessToken =
+        generateAccessToken(payload);
 
-    const refreshToken = generateRefreshToken(payload);
+    const refreshToken =
+        generateRefreshToken(payload);
 
-    await updateRefreshToken(user.id, hashToken(refreshToken));
+    await updateRefreshToken(
+        user.id,
+        hashToken(refreshToken)
+    );
 
     const safeUser = {
         id: user.id,
@@ -72,6 +116,7 @@ export const loginUser = async ({ email, password }) => {
         email: user.email,
         avatar: user.avatar,
         isVerified: user.isVerified,
+        role: user.role,
     };
 
     return {
@@ -79,53 +124,86 @@ export const loginUser = async ({ email, password }) => {
         accessToken,
         refreshToken,
     };
-
 };
 
-export const refreshUserToken = async (refreshToken) => {
+export const refreshUserToken = async (
+    refreshToken
+) => {
     if (!refreshToken) {
-        throw new AppError("Reresh token is required", 400);
+        throw new AppError(
+            "Refresh token is required",
+            400
+        );
     }
 
     let decoded;
-    
+
     try {
-        decoded = verifyRefreshToken(refreshToken);
+        decoded =
+            verifyRefreshToken(refreshToken);
     } catch (error) {
-        throw new AppError("Invalid refresh token", 401);
+        throw new AppError(
+            "Invalid refresh token",
+            401
+        );
     }
 
-    const user = await findUserById(decoded.id)
+    const user =
+        await findUserById(decoded.id);
 
     if (!user || !user.refreshToken) {
-        throw new AppError("Invalid refresh token", 401);
+        throw new AppError(
+            "Invalid refresh token",
+            401
+        );
     }
 
-    if (!compareTokenHashes(hashToken(refreshToken), user.refreshToken)) {
-        throw new AppError("Invalid Refresh token", 401);
+    const incomingHash =
+        hashToken(refreshToken);
+
+    if (
+        !compareTokenHashes(
+            incomingHash,
+            user.refreshToken
+        )
+    ) {
+        throw new AppError(
+            "Invalid refresh token",
+            401
+        );
     }
+
     const payload = {
         id: user.id,
         email: user.email,
-    }
-
-    const newAccesstToken = generateAccessToken(payload);
-    const newRefreshToken = generateRefreshToken(payload);
-
-    await updateRefreshToken(user.id, hashToken(newRefreshToken));
-
-    return {
-        accessToken: newAccesstToken,
-        refreshToken: newRefreshToken
     };
 
+    const accessToken =
+        generateAccessToken(payload);
+
+    const newRefreshToken =
+        generateRefreshToken(payload);
+
+    await updateRefreshToken(
+        user.id,
+        hashToken(newRefreshToken)
+    );
+
+    return {
+        accessToken,
+        refreshToken: newRefreshToken,
+    };
 };
 
 export const logoutUser = async (id) => {
-    if (!id) return;
+    if (!id) {
+        return;
+    }
 
-    await updateRefreshToken(id, null);
+    await updateRefreshToken(
+        id,
+        null
+    );
 
     return true;
 };
-
