@@ -2,6 +2,8 @@ from datetime import datetime
 
 from database.connection import get_connection
 
+from scoring.metadata_scorer import parse_duration
+
 
 def save_pipeline_candidates(
     pipeline_job_id,
@@ -44,6 +46,15 @@ def save_pipeline_candidates(
 
                 except Exception:
                     published_at = None
+
+            duration_seconds = parse_duration(
+                video.get("duration")
+            )
+
+            ai_analysis = video.get(
+                "aiAnalysis",
+                {}
+            )
 
             cursor.execute(
                 """
@@ -125,7 +136,9 @@ def save_pipeline_candidates(
                 (
                     pipeline_job_id,
 
-                    video.get("videoId"),
+                    video.get(
+                        "videoId"
+                    ),
 
                     video.get(
                         "title",
@@ -150,10 +163,7 @@ def save_pipeline_candidates(
 
                     published_at,
 
-                    video.get(
-                        "durationSeconds",
-                        0
-                    ),
+                    duration_seconds,
 
                     video.get(
                         "viewCount",
@@ -174,12 +184,14 @@ def save_pipeline_candidates(
                         "metadataScore"
                     ),
 
-                    video.get(
-                        "aiScore"
+                    ai_analysis.get(
+                        "aiScore",
+                        0
                     ),
 
-                    video.get(
-                        "aiConfidence"
+                    ai_analysis.get(
+                        "confidence",
+                        0
                     ),
 
                     video.get(
@@ -367,10 +379,24 @@ def update_pipeline_job_status(
         if connection:
             connection.close()
 
-def save_learning_path(topic_id, learning_path):
-    connection = get_connection()
+
+def save_learning_path(
+    topic_id,
+    learning_path,
+    videos
+):
+    """
+    Save the generated learning path,
+    lessons, and approved LearningVideo
+    records.
+    """
+
+    connection = None
+    cursor = None
 
     try:
+
+        connection = get_connection()
         cursor = connection.cursor()
 
         cursor.execute(
@@ -385,8 +411,7 @@ def save_learning_path(topic_id, learning_path):
                 "createdAt",
                 "updatedAt"
             )
-            VALUES
-            (
+            VALUES (
                 gen_random_uuid(),
                 %s,
                 %s,
@@ -399,14 +424,27 @@ def save_learning_path(topic_id, learning_path):
             """,
             (
                 learning_path["title"],
-                learning_path.get("description"),
-                topic_id,
+
+                learning_path.get(
+                    "description"
+                ),
+
+                topic_id
             )
         )
 
         learning_path_id = cursor.fetchone()[0]
 
-        for lesson in learning_path["lessons"]:
+        video_map = {
+            video.get("videoId"): video
+            for video in videos
+            if video.get("videoId")
+        }
+
+        for lesson in learning_path.get(
+            "lessons",
+            []
+        ):
 
             cursor.execute(
                 """
@@ -420,8 +458,7 @@ def save_learning_path(topic_id, learning_path):
                     "createdAt",
                     "updatedAt"
                 )
-                VALUES
-                (
+                VALUES (
                     gen_random_uuid(),
                     %s,
                     %s,
@@ -434,39 +471,181 @@ def save_learning_path(topic_id, learning_path):
                 """,
                 (
                     learning_path_id,
+
                     lesson["title"],
-                    lesson.get("description"),
-                    lesson["order"],
+
+                    lesson.get(
+                        "description"
+                    ),
+
+                    lesson["order"]
                 )
             )
 
             lesson_id = cursor.fetchone()[0]
 
-            for video in lesson.get("videos", []):
+            for video in lesson.get(
+                "videos",
+                []
+            ):
+
+                video_id = video.get(
+                    "videoId"
+                )
+
+                if not video_id:
+                    continue
+
+                source_video = video_map.get(
+                    video_id
+                )
+
+                if not source_video:
+                    continue
+
+                ai_analysis = source_video.get(
+                    "aiAnalysis",
+                    {}
+                )
+
+                duration_seconds = parse_duration(
+                    source_video.get(
+                        "duration"
+                    )
+                )
 
                 cursor.execute(
                     """
-                    UPDATE "LearningVideo"
-                    SET
-                        "lessonId" = %s,
-                        "status" = 'APPROVED',
+                    INSERT INTO "LearningVideo"
+                    (
+                        id,
+                        "lessonId",
+                        "youtubeVideoId",
+                        title,
+                        description,
+                        "thumbnailUrl",
+                        "channelName",
+                        "channelId",
+                        "durationSeconds",
+                        "relevanceScore",
+                        "qualityScore",
+                        "difficultyScore",
+                        "aiSummary",
+                        status,
+                        "createdAt",
+                        "updatedAt"
+                    )
+                    VALUES (
+                        gen_random_uuid(),
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        %s,
+                        'APPROVED',
+                        NOW(),
+                        NOW()
+                    )
+                    ON CONFLICT ("youtubeVideoId")
+                    DO UPDATE SET
+                        "lessonId" = EXCLUDED."lessonId",
+                        title = EXCLUDED.title,
+                        description = EXCLUDED.description,
+                        "thumbnailUrl" = EXCLUDED."thumbnailUrl",
+                        "channelName" = EXCLUDED."channelName",
+                        "channelId" = EXCLUDED."channelId",
+                        "durationSeconds" = EXCLUDED."durationSeconds",
+                        "relevanceScore" = EXCLUDED."relevanceScore",
+                        "qualityScore" = EXCLUDED."qualityScore",
+                        "difficultyScore" = EXCLUDED."difficultyScore",
+                        "aiSummary" = EXCLUDED."aiSummary",
+                        status = 'APPROVED',
                         "updatedAt" = NOW()
-                    WHERE "youtubeVideoId" = %s
                     """,
                     (
                         lesson_id,
-                        video["videoId"],
+
+                        video_id,
+
+                        source_video.get(
+                            "title",
+                            ""
+                        ),
+
+                        source_video.get(
+                            "description"
+                        ),
+
+                        source_video.get(
+                            "thumbnail"
+                        ),
+
+                        source_video.get(
+                            "channelTitle"
+                        ),
+
+                        source_video.get(
+                            "channelId"
+                        ),
+
+                        duration_seconds,
+
+                        ai_analysis.get(
+                            "relevanceScore"
+                        ),
+
+                        ai_analysis.get(
+                            "contentQualityScore"
+                        ),
+
+                        ai_analysis.get(
+                            "difficultyMatch"
+                        ),
+
+                        ai_analysis.get(
+                            "summary"
+                        )
                     )
                 )
 
         connection.commit()
 
+        print(
+            f"Learning path saved: {learning_path_id}"
+        )
+
         return learning_path_id
 
-    except Exception:
-        connection.rollback()
+    except Exception as error:
+
+        if connection:
+            connection.rollback()
+
+        print(
+            "Failed to save learning path:"
+        )
+
+        print(
+            type(error).__name__
+        )
+
+        print(
+            str(error)
+        )
+
         raise
 
     finally:
-        cursor.close()
-        connection.close()
+
+        if cursor:
+            cursor.close()
+
+        if connection:
+            connection.close()

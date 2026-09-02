@@ -27,10 +27,21 @@ from ai.learning_path_generator import (
 
 
 def generate_search_queries(topic):
+    """
+    Generate YouTube search queries for a predefined topic.
+    """
 
-    name = topic.get("name", "").strip()
+    name = topic.get(
+        "name",
+        ""
+    ).strip()
 
-    description = topic.get("description")
+    if not name:
+        return []
+
+    description = topic.get(
+        "description"
+    )
 
     queries = [
         name,
@@ -40,9 +51,13 @@ def generate_search_queries(topic):
     ]
 
     if description:
-        description = str(description).strip()
+
+        description = str(
+            description
+        ).strip()
 
         if description:
+
             queries.append(
                 f"{name} {description}"
             )
@@ -50,314 +65,509 @@ def generate_search_queries(topic):
     return queries
 
 
-def process_topic(topic_id, pipeline_job_id):
+def process_topic(
+    topic_id,
+    pipeline_job_id
+):
+    """
+    Execute the complete LearnOS AI pipeline.
+
+    Pipeline:
+
+    Topic
+      ↓
+    YouTube Search
+      ↓
+    Deduplication
+      ↓
+    Video Details
+      ↓
+    Metadata Ranking
+      ↓
+    Transcript Extraction
+      ↓
+    Gemini AI Analysis
+      ↓
+    Final Ranking
+      ↓
+    Save Pipeline Candidates
+      ↓
+    Generate Learning Path
+      ↓
+    Save Learning Path
+      ↓
+    Complete Pipeline Job
+    """
 
     print("\n========================")
     print("Starting topic pipeline")
     print("Topic Id:", topic_id)
     print("========================")
 
-    update_pipeline_job_status(
-        pipeline_job_id,
-        "PROCESSING",
-        5
-    )
+    try:
 
-    topic = get_topic_by_id(topic_id)
+        update_pipeline_job_status(
+            pipeline_job_id,
+            "PROCESSING",
+            5
+        )
 
-    if not topic:
-        raise ValueError("Topic not found")
+        topic = get_topic_by_id(
+            topic_id
+        )
 
-    print("\nTopic:")
-    print(topic.get("name", ""))
+        if not topic:
+            raise ValueError(
+                "Topic not found"
+            )
 
-    queries = generate_search_queries(topic)
+        print("\nTopic:")
+        print(
+            topic.get(
+                "name",
+                ""
+            )
+        )
 
-    print("\nSearch queries")
+        queries = generate_search_queries(
+            topic
+        )
 
-    for query in queries:
-        print("-", query)
+        if not queries:
+            raise ValueError(
+                "No search queries generated"
+            )
 
-    update_pipeline_job_status(
-        pipeline_job_id,
-        "PROCESSING",
-        10
-    )
+        print("\nSearch queries")
 
-    all_videos = []
+        for query in queries:
 
-    for query in queries:
+            print(
+                "-",
+                query
+            )
+
+        update_pipeline_job_status(
+            pipeline_job_id,
+            "PROCESSING",
+            10
+        )
+
+        # ==================================================
+        # YOUTUBE SEARCH
+        # ==================================================
+
+        all_videos = []
+
+        for query in queries:
+
+            print(
+                f"\nSearching YouTube for: {query}"
+            )
+
+            try:
+
+                videos = search_videos(
+                    query,
+                    max_results=10
+                )
+
+                if videos:
+                    all_videos.extend(
+                        videos
+                    )
+
+            except Exception as error:
+
+                print(
+                    "\nYouTube search failed:"
+                )
+
+                print(
+                    "Type:",
+                    type(error).__name__
+                )
+
+                print(
+                    "Message:",
+                    str(error)
+                )
+
+                continue
 
         print(
-            f"\nSearching YouTube for: {query}"
+            "\nVideos before deduplication:",
+            len(all_videos)
         )
 
-        try:
+        if not all_videos:
 
-            videos = search_videos(
-                query,
-                max_results=10
+            raise ValueError(
+                "No YouTube videos found"
             )
 
-            all_videos.extend(videos)
+        # ==================================================
+        # DEDUPLICATION
+        # ==================================================
 
-        except Exception as error:
-
-            print("\nYouTube search failed:")
-            print(type(error).__name__)
-            print(str(error))
-
-            continue
-
-    print(
-        "\nVideos before deduplication:",
-        len(all_videos)
-    )
-
-    if not all_videos:
-
-        update_pipeline_job_status(
-            pipeline_job_id,
-            "FAILED",
-            10
+        all_videos = duplicate_videos(
+            all_videos
         )
 
-        return []
-
-    all_videos = duplicate_videos(
-        all_videos
-    )
-
-    print(
-        "Videos after deduplication:",
-        len(all_videos)
-    )
-
-    video_ids = [
-        video.get("videoId")
-        for video in all_videos
-        if video.get("videoId")
-    ]
-
-    if not video_ids:
-
-        update_pipeline_job_status(
-            pipeline_job_id,
-            "FAILED",
-            10
+        print(
+            "Videos after deduplication:",
+            len(all_videos)
         )
 
-        return []
-
-    detailed_videos = []
-
-    for i in range(
-        0,
-        len(video_ids),
-        50
-    ):
-
-        batch = video_ids[
-            i:i + 50
+        video_ids = [
+            video.get(
+                "videoId"
+            )
+            for video in all_videos
+            if video.get(
+                "videoId"
+            )
         ]
 
-        try:
+        if not video_ids:
 
-            details = get_videos_details(
-                batch
+            raise ValueError(
+                "No valid YouTube video IDs found"
             )
 
-            detailed_videos.extend(
-                details
-            )
+        # ==================================================
+        # YOUTUBE VIDEO DETAILS
+        # ==================================================
 
-        except Exception as error:
+        detailed_videos = []
 
-            print(
-                "\nYouTube details request failed:"
-            )
+        for i in range(
+            0,
+            len(video_ids),
+            50
+        ):
 
-            print(
-                type(error).__name__
-            )
+            batch = video_ids[
+                i:i + 50
+            ]
 
-            print(
-                str(error)
-            )
+            try:
 
-            continue
+                details = get_videos_details(
+                    batch
+                )
 
-    print(
-        "\nDetailed videos received:",
-        len(detailed_videos)
-    )
+                if details:
+                    detailed_videos.extend(
+                        details
+                    )
 
-    if not detailed_videos:
+            except Exception as error:
 
-        update_pipeline_job_status(
-            pipeline_job_id,
-            "FAILED",
-            15
+                print(
+                    "\nYouTube details request failed:"
+                )
+
+                print(
+                    "Type:",
+                    type(error).__name__
+                )
+
+                print(
+                    "Message:",
+                    str(error)
+                )
+
+                continue
+
+        print(
+            "\nDetailed videos received:",
+            len(detailed_videos)
         )
 
-        return []
+        if not detailed_videos:
 
-    update_pipeline_job_status(
-        pipeline_job_id,
-        "PROCESSING",
-        25
-    )
-
-    filtered_videos = filter_candidates(
-        topic,
-        detailed_videos,
-        max_candidates=10
-    )
-
-    print(
-        "\nVideos after metadata ranking:",
-        len(filtered_videos)
-    )
-
-    if not filtered_videos:
+            raise ValueError(
+                "No detailed YouTube videos received"
+            )
 
         update_pipeline_job_status(
             pipeline_job_id,
-            "FAILED",
+            "PROCESSING",
             25
         )
 
-        return []
+        # ==================================================
+        # METADATA RANKING
+        # ==================================================
 
-    print("\n========================")
-    print("Starting transcript extraction")
-    print("========================")
-
-    for video in filtered_videos:
-
-        video_id = video.get("videoId")
-
-        title = video.get(
-            "title",
-            ""
+        filtered_videos = filter_candidates(
+            topic,
+            detailed_videos,
+            max_candidates=10
         )
 
         print(
-            f"\nExtracting transcript: {title}"
+            "\nVideos after metadata ranking:",
+            len(filtered_videos)
         )
 
-        try:
+        if not filtered_videos:
 
-            transcript_result = get_transcript(
-                video_id
+            raise ValueError(
+                "No videos passed metadata ranking"
             )
 
-            if not transcript_result:
+        # ==================================================
+        # TRANSCRIPT EXTRACTION
+        # ==================================================
 
-                transcript_result = {
-                    "available": False,
-                    "entries": [],
-                    "text": "",
-                    "error": "Empty transcript response"
-                }
+        print("\n========================")
+        print("Starting transcript extraction")
+        print("========================")
 
-            video["transcriptAvailable"] = (
-                transcript_result.get(
-                    "available",
-                    False
-                )
+        for video in filtered_videos:
+
+            video_id = video.get(
+                "videoId"
             )
 
-            video["transcript"] = (
-                transcript_result.get(
-                    "entries",
-                    []
-                )
+            title = video.get(
+                "title",
+                ""
             )
 
-            video["transcriptText"] = (
-                transcript_result.get(
-                    "text",
-                    ""
-                )
+            print(
+                f"\nExtracting transcript: {title}"
             )
 
-            video["transcriptError"] = (
-                transcript_result.get(
-                    "error"
-                )
-            )
+            try:
 
-            if video["transcriptAvailable"]:
-
-                print(
-                    "Transcript available"
+                transcript_result = get_transcript(
+                    video_id
                 )
 
-                print(
-                    "Transcript characters:",
-                    len(
-                        video["transcriptText"]
+                if not transcript_result:
+
+                    transcript_result = {
+                        "available": False,
+                        "entries": [],
+                        "text": "",
+                        "error": (
+                            "Empty transcript response"
+                        ),
+                        "errorType": (
+                            "EmptyResponse"
+                        )
+                    }
+
+                video["transcriptAvailable"] = bool(
+                    transcript_result.get(
+                        "available",
+                        False
                     )
                 )
 
-            else:
+                video["transcript"] = (
+                    transcript_result.get(
+                        "entries",
+                        []
+                    )
+                )
+
+                video["transcriptText"] = (
+                    transcript_result.get(
+                        "text",
+                        ""
+                    )
+                )
+
+                video["transcriptError"] = (
+                    transcript_result.get(
+                        "error"
+                    )
+                )
+
+                video["transcriptErrorType"] = (
+                    transcript_result.get(
+                        "errorType"
+                    )
+                )
+
+                if video["transcriptAvailable"]:
+
+                    print(
+                        "Transcript available"
+                    )
+
+                    print(
+                        "Transcript characters:",
+                        len(
+                            video["transcriptText"]
+                        )
+                    )
+
+                else:
+
+                    print(
+                        "Transcript unavailable"
+                    )
+
+                    print(
+                        "Reason:",
+                        video["transcriptError"]
+                    )
+
+            except Exception as error:
 
                 print(
-                    "Transcript unavailable"
+                    "\nTranscript extraction failed:"
                 )
 
                 print(
-                    "Reason:",
-                    video["transcriptError"]
+                    "Type:",
+                    type(error).__name__
                 )
 
-        except Exception as error:
+                print(
+                    "Message:",
+                    str(error)
+                )
 
-            print(
-                "\nTranscript extraction failed:"
-            )
+                video["transcriptAvailable"] = False
+                video["transcript"] = []
+                video["transcriptText"] = ""
+                video["transcriptError"] = str(
+                    error
+                )
+                video["transcriptErrorType"] = (
+                    type(error).__name__
+                )
 
-            print(
-                type(error).__name__
-            )
-
-            print(
-                str(error)
-            )
-
-            video["transcriptAvailable"] = False
-            video["transcript"] = []
-            video["transcriptText"] = ""
-            video["transcriptError"] = str(error)
-
-    update_pipeline_job_status(
-        pipeline_job_id,
-        "PROCESSING",
-        50
-    )
-
-    print("\n========================")
-    print("Starting AI video analysis")
-    print("========================")
-
-    for video in filtered_videos:
-
-        print(
-            f"\nAnalyzing video: "
-            f"{video.get('title', '')}"
+        update_pipeline_job_status(
+            pipeline_job_id,
+            "PROCESSING",
+            50
         )
 
-        try:
+        # ==================================================
+        # AI VIDEO ANALYSIS
+        # ==================================================
 
-            ai_result = analyze_video(
-                topic,
-                video
+        print("\n========================")
+        print("Starting AI video analysis")
+        print("========================")
+
+        for video in filtered_videos:
+
+            print(
+                f"\nAnalyzing video: "
+                f"{video.get('title', '')}"
             )
 
-            if not ai_result:
+            try:
 
-                ai_result = {
+                ai_result = analyze_video(
+                    topic,
+                    video
+                )
+
+                if not ai_result:
+
+                    ai_result = {
+                        "relevanceScore": 0,
+                        "educationalScore": 0,
+                        "completenessScore": 0,
+                        "difficultyMatch": 0,
+                        "contentQualityScore": 0,
+                        "topicsCovered": [],
+                        "missingTopics": [],
+                        "summary": "",
+                        "confidence": 0,
+                        "aiScore": 0
+                    }
+
+                relevance = float(
+                    ai_result.get(
+                        "relevanceScore",
+                        0
+                    )
+                )
+
+                educational = float(
+                    ai_result.get(
+                        "educationalScore",
+                        0
+                    )
+                )
+
+                completeness = float(
+                    ai_result.get(
+                        "completenessScore",
+                        0
+                    )
+                )
+
+                difficulty = float(
+                    ai_result.get(
+                        "difficultyMatch",
+                        0
+                    )
+                )
+
+                quality = float(
+                    ai_result.get(
+                        "contentQualityScore",
+                        0
+                    )
+                )
+
+                # Weighted AI score.
+                ai_score = (
+                    relevance * 0.30
+                    + educational * 0.25
+                    + completeness * 0.20
+                    + difficulty * 0.10
+                    + quality * 0.15
+                )
+
+                ai_result["aiScore"] = round(
+                    ai_score,
+                    2
+                )
+
+                video["aiAnalysis"] = ai_result
+
+                print(
+                    "AI Score:",
+                    ai_result["aiScore"]
+                )
+
+                print(
+                    "AI Confidence:",
+                    ai_result.get(
+                        "confidence",
+                        0
+                    )
+                )
+
+            except Exception as error:
+
+                print(
+                    "\nAI analysis failed:"
+                )
+
+                print(
+                    "Type:",
+                    type(error).__name__
+                )
+
+                print(
+                    "Message:",
+                    str(error)
+                )
+
+                video["aiAnalysis"] = {
                     "relevanceScore": 0,
                     "educationalScore": 0,
                     "completenessScore": 0,
@@ -367,268 +577,243 @@ def process_topic(topic_id, pipeline_job_id):
                     "missingTopics": [],
                     "summary": "",
                     "confidence": 0,
-                    "aiScore": 0
+                    "aiScore": 0,
+                    "error": str(error)
                 }
 
-            relevance = float(
-                ai_result.get(
-                    "relevanceScore",
+        update_pipeline_job_status(
+            pipeline_job_id,
+            "PROCESSING",
+            75
+        )
+
+        # ==================================================
+        # FINAL SCORE
+        # ==================================================
+
+        print("\n========================")
+        print("Calculating final scores")
+        print("========================")
+
+        for video in filtered_videos:
+
+            metadata_score = float(
+                video.get(
+                    "metadataScore",
                     0
                 )
             )
 
-            educational = float(
-                ai_result.get(
-                    "educationalScore",
+            ai_analysis = video.get(
+                "aiAnalysis",
+                {}
+            )
+
+            ai_score = float(
+                ai_analysis.get(
+                    "aiScore",
                     0
                 )
             )
 
-            completeness = float(
-                ai_result.get(
-                    "completenessScore",
-                    0
-                )
+            final_score = (
+                metadata_score * 0.40
+                + ai_score * 0.60
             )
 
-            difficulty = float(
-                ai_result.get(
-                    "difficultyMatch",
-                    0
-                )
-            )
-
-            quality = float(
-                ai_result.get(
-                    "contentQualityScore",
-                    0
-                )
-            )
-
-            ai_score = (
-                relevance * 0.30
-                + educational * 0.25
-                + completeness * 0.20
-                + difficulty * 0.10
-                + quality * 0.15
-            )
-
-            ai_result["aiScore"] = round(
-                ai_score,
+            video["finalScore"] = round(
+                final_score,
                 2
             )
 
-            video["aiAnalysis"] = ai_result
+        filtered_videos.sort(
+            key=lambda video:
+                video.get(
+                    "finalScore",
+                    0
+                ),
+            reverse=True
+        )
+
+        print("\n========================")
+        print("FINAL VIDEO RANKING")
+        print("========================")
+
+        for index, video in enumerate(
+            filtered_videos,
+            start=1
+        ):
 
             print(
-                "AI Score:",
-                ai_result["aiScore"]
+                f"\n{index}. "
+                f"{video.get('title', '')}"
             )
 
             print(
-                "AI Confidence:",
-                ai_result.get(
-                    "confidence",
+                "Video ID:",
+                video.get(
+                    "videoId"
+                )
+            )
+
+            print(
+                "Metadata Score:",
+                video.get(
+                    "metadataScore",
                     0
                 )
             )
 
-        except Exception as error:
+            print(
+                "AI Score:",
+                video.get(
+                    "aiAnalysis",
+                    {}
+                ).get(
+                    "aiScore",
+                    0
+                )
+            )
 
             print(
-                "\nAI analysis failed:"
+                "Final Score:",
+                video.get(
+                    "finalScore",
+                    0
+                )
             )
 
             print(
-                type(error).__name__
+                "Transcript:",
+                "Available"
+                if video.get(
+                    "transcriptAvailable",
+                    False
+                )
+                else "Unavailable"
+            )
+
+        # ==================================================
+        # SAVE PIPELINE CANDIDATES
+        # ==================================================
+
+        print("\n========================")
+        print("Saving pipeline results")
+        print("========================")
+
+        saved_count = save_pipeline_candidates(
+            pipeline_job_id,
+            filtered_videos
+        )
+
+        print(
+            "Results saved:",
+            saved_count
+        )
+
+        update_pipeline_job_status(
+            pipeline_job_id,
+            "PROCESSING",
+            85
+        )
+
+        # ==================================================
+        # LEARNING PATH GENERATION
+        # ==================================================
+
+        print("\n========================")
+        print("Generating learning path")
+        print("========================")
+
+        learning_path = generate_learning_path(
+            topic,
+            filtered_videos
+        )
+
+        if not learning_path:
+
+            raise ValueError(
+                "Learning path generation failed"
+            )
+
+        print(
+            "Learning path generated:"
+        )
+
+        print(
+            learning_path.get(
+                "title",
+                ""
+            )
+        )
+
+        # ==================================================
+        # SAVE LEARNING PATH
+        # ==================================================
+
+        learning_path_id = save_learning_path(
+            topic_id,
+            learning_path,
+            filtered_videos
+        )
+
+        print(
+            "Learning path saved:",
+            learning_path_id
+        )
+
+        # ==================================================
+        # COMPLETE PIPELINE
+        # ==================================================
+
+        update_pipeline_job_status(
+            pipeline_job_id,
+            "COMPLETED",
+            100
+        )
+
+        print("\n========================")
+        print("PIPELINE COMPLETED")
+        print("========================")
+
+        return filtered_videos
+
+    except Exception as error:
+
+        print("\n========================")
+        print("PIPELINE FAILED")
+        print("========================")
+
+        print(
+            "Type:",
+            type(error).__name__
+        )
+
+        print(
+            "Message:",
+            str(error)
+        )
+
+        try:
+
+            update_pipeline_job_status(
+                pipeline_job_id,
+                "FAILED",
+                0
+            )
+
+        except Exception as status_error:
+
+            print(
+                "\nFailed to update PipelineJob status:"
             )
 
             print(
-                str(error)
+                type(status_error).__name__
             )
 
-            video["aiAnalysis"] = {
-                "relevanceScore": 0,
-                "educationalScore": 0,
-                "completenessScore": 0,
-                "difficultyMatch": 0,
-                "contentQualityScore": 0,
-                "topicsCovered": [],
-                "missingTopics": [],
-                "summary": "",
-                "confidence": 0,
-                "aiScore": 0,
-                "error": str(error)
-            }
-
-    update_pipeline_job_status(
-        pipeline_job_id,
-        "PROCESSING",
-        75
-    )
-
-    print("\n========================")
-    print("Calculating final scores")
-    print("========================")
-
-    for video in filtered_videos:
-
-        metadata_score = float(
-            video.get(
-                "metadataScore",
-                0
+            print(
+                str(status_error)
             )
-        )
 
-        ai_score = float(
-            video.get(
-                "aiAnalysis",
-                {}
-            ).get(
-                "aiScore",
-                0
-            )
-        )
-
-        final_score = (
-            metadata_score * 0.40
-            + ai_score * 0.60
-        )
-
-        video["finalScore"] = round(
-            final_score,
-            2
-        )
-
-    filtered_videos.sort(
-        key=lambda video:
-            video.get(
-                "finalScore",
-                0
-            ),
-        reverse=True
-    )
-
-    print("\n========================")
-    print("FINAL VIDEO RANKING")
-    print("========================")
-
-    for index, video in enumerate(
-        filtered_videos,
-        start=1
-    ):
-
-        print(
-            f"\n{index}. "
-            f"{video.get('title', '')}"
-        )
-
-        print(
-            "Video ID:",
-            video.get("videoId")
-        )
-
-        print(
-            "Metadata Score:",
-            video.get(
-                "metadataScore",
-                0
-            )
-        )
-
-        print(
-            "AI Score:",
-            video.get(
-                "aiAnalysis",
-                {}
-            ).get(
-                "aiScore",
-                0
-            )
-        )
-
-        print(
-            "Final Score:",
-            video.get(
-                "finalScore",
-                0
-            )
-        )
-
-        print(
-            "Transcript:",
-            "Available"
-            if video.get(
-                "transcriptAvailable",
-                False
-            )
-            else "Unavailable"
-        )
-
-    print("\n========================")
-    print("Saving pipeline results")
-    print("========================")
-
-    saved_count = save_pipeline_candidates(
-        pipeline_job_id,
-        filtered_videos
-    )
-
-    print(
-        "Results saved:",
-        saved_count
-    )
-
-    update_pipeline_job_status(
-        pipeline_job_id,
-        "PROCESSING",
-        85
-    )
-
-    print("\n========================")
-    print("Generating learning path")
-    print("========================")
-
-    learning_path = generate_learning_path(
-        topic,
-        filtered_videos
-    )
-
-    if not learning_path:
-
-        raise ValueError(
-            "Learning path generation failed"
-        )
-
-    print(
-        "Learning path generated:"
-    )
-
-    print(
-        learning_path.get(
-            "title",
-            ""
-        )
-    )
-
-    learning_path_id = save_learning_path(
-        topic_id,
-        learning_path
-    )
-
-    print(
-        "Learning path saved:",
-        learning_path_id
-    )
-
-    update_pipeline_job_status(
-        pipeline_job_id,
-        "COMPLETED",
-        100
-    )
-
-    print("\n========================")
-    print("PIPELINE COMPLETED")
-    print("========================")
-
-    return filtered_videos
+        raise

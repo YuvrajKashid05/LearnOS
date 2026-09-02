@@ -13,14 +13,15 @@ export const startTopicPipeline = async (topicId) => {
         );
     }
 
-    if (topic.status == "PUBLISHED") {
+    if (topic.status === "PUBLISHED") {
         throw new AppError(
-            "Pipeline cannot run for alreay published topic",
+            "Pipeline cannot run for already published topic",
             400
         );
     }
 
-    const existingJob = await pipelineRepo.findActivePipelineJobByTopicId(topicId);
+    const existingJob =
+        await pipelineRepo.findActivePipelineJobByTopicId(topicId);
 
     if (existingJob) {
         throw new AppError(
@@ -33,7 +34,6 @@ export const startTopicPipeline = async (topicId) => {
         topicId,
         status: "PENDING"
     });
-
 
     try {
         await pipelineRepo.updatePipelineJob(
@@ -48,15 +48,15 @@ export const startTopicPipeline = async (topicId) => {
             topicId
         });
 
-        return pipelineRepo.findPipelineJobById(pipelineJob.id);
-
+        return await pipelineRepo.findPipelineJobById(
+            pipelineJob.id
+        );
 
     } catch (error) {
         await pipelineRepo.updatePipelineJob(
             pipelineJob.id,
             {
-                status: "FAILED",
-                errorMessage: error.message,
+                status: "FAILED"
             }
         );
 
@@ -65,8 +65,9 @@ export const startTopicPipeline = async (topicId) => {
 };
 
 export const getPipelineJob = async (id) => {
-    const pipelineJob = await pipelineRepo.findPipelineJobById(id);
-    
+    const pipelineJob =
+        await pipelineRepo.findPipelineJobById(id);
+
     if (!pipelineJob) {
         throw new AppError(
             "Pipeline Job not found",

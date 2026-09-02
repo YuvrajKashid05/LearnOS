@@ -3,10 +3,6 @@ import math
 import re
 
 
-# =========================================================
-# TEXT NORMALIZATION
-# =========================================================
-
 def normalize_text(text):
 
     if text is None:
@@ -26,11 +22,6 @@ def normalize_text(text):
     return " ".join(
         text.split()
     )
-
-
-# =========================================================
-# TEXT RELEVANCE
-# =========================================================
 
 def calculate_text_relevance(
     topic_name,
@@ -69,11 +60,6 @@ def calculate_text_relevance(
         len(topic_words)
     ) * 100
 
-
-# =========================================================
-# POPULARITY
-# =========================================================
-
 def calculate_popularity_score(view_count):
 
     try:
@@ -96,11 +82,6 @@ def calculate_popularity_score(view_count):
         score,
         100
     )
-
-
-# =========================================================
-# ENGAGEMENT
-# =========================================================
 
 def calculate_engagement_score(
     view_count,
@@ -140,10 +121,6 @@ def calculate_engagement_score(
         100
     )
 
-
-# =========================================================
-# FRESHNESS
-# =========================================================
 
 def calculate_freshness_score(
     published_at
@@ -187,10 +164,6 @@ def calculate_freshness_score(
 
         return 0
 
-
-# =========================================================
-# DURATION PARSER
-# =========================================================
 
 def parse_duration(duration):
 
@@ -240,10 +213,6 @@ def parse_duration(duration):
     )
 
 
-# =========================================================
-# DURATION SCORE
-# =========================================================
-
 def calculate_duration_score(
     duration
 ):
@@ -264,11 +233,6 @@ def calculate_duration_score(
         return 60
 
     return 70
-
-
-# =========================================================
-# TOTAL METADATA SCORE
-# =========================================================
 
 def calculate_metadata_score(
     topic,
@@ -331,11 +295,6 @@ def calculate_metadata_score(
         score,
         2
     )
-
-
-# =========================================================
-# FILTER / RANK CANDIDATES
-# =========================================================
 
 def filter_candidates(
     topic,

@@ -10,10 +10,22 @@ def fetch_youtube_transcript(video_id):
     is unavailable.
     """
 
+    if not video_id:
+        return {
+            "available": False,
+            "entries": [],
+            "text": "",
+            "error": "Video ID is required",
+            "errorType": "InvalidVideoId",
+            "provider": "youtube_transcript_api",
+        }
+
     try:
         api = YouTubeTranscriptApi()
 
-        transcript = api.fetch(video_id)
+        transcript = api.fetch(
+            video_id
+        )
 
         entries = []
 
@@ -24,7 +36,9 @@ def fetch_youtube_transcript(video_id):
                 "duration": item.duration,
             })
 
-        text = transcript_to_text(entries)
+        text = transcript_to_text(
+            entries
+        )
 
         return {
             "available": True,
@@ -37,8 +51,13 @@ def fetch_youtube_transcript(video_id):
 
     except Exception as error:
 
-        error_type = type(error).__name__
-        error_message = str(error)
+        error_type = type(
+            error
+        ).__name__
+
+        error_message = str(
+            error
+        )
 
         print(
             f"\nTranscript error for {video_id}:"

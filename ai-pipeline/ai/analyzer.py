@@ -26,10 +26,16 @@ client = genai.Client(
 )
 
 
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = os.getenv(
+    "GEMINI_MODEL",
+    "gemini-2.5-flash"
+)
 
 
 def build_video_context(topic, video):
+    """
+    Build the context sent to Gemini for video analysis.
+    """
 
     transcript_available = video.get(
         "transcriptAvailable",
@@ -41,11 +47,21 @@ def build_video_context(topic, video):
         ""
     )
 
-    # Avoid sending extremely large transcripts
-    if transcript_text:
-        transcript_text = transcript_text[:30000]
+    if not isinstance(
+        transcript_text,
+        str
+    ):
+        transcript_text = str(
+            transcript_text or ""
+        )
 
-    if not transcript_available:
+    # Avoid sending extremely large transcripts.
+    transcript_text = transcript_text[:30000]
+
+    if (
+        not transcript_available
+        or not transcript_text.strip()
+    ):
         transcript_text = (
             "Transcript unavailable. "
             "Evaluate using metadata only."
@@ -58,19 +74,25 @@ Name:
 {topic.get("name", "")}
 
 Description:
-{topic.get("description", "")}
+{topic.get("description") or ""}
+
+Category:
+{topic.get("category") or ""}
 
 Difficulty:
-{topic.get("difficulty", "")}
+{topic.get("difficulty") or ""}
 
 
 YOUTUBE VIDEO
+
+Video ID:
+{video.get("videoId", "")}
 
 Title:
 {video.get("title", "")}
 
 Description:
-{video.get("description", "")}
+{video.get("description") or ""}
 
 Duration:
 {video.get("duration", "")}
@@ -97,6 +119,12 @@ TRANSCRIPT
 
 
 def analyze_video(topic, video):
+    """
+    Analyze a YouTube video using Gemini.
+
+    Returns a validated AI analysis result.
+    If Gemini fails, a safe fallback result is returned.
+    """
 
     context = build_video_context(
         topic,
@@ -119,7 +147,35 @@ def analyze_video(topic, video):
             }
         )
 
+        if not response:
+            raise ValueError(
+                "Gemini returned no response"
+            )
+
         raw_text = response.text
+
+        if not raw_text:
+            raise ValueError(
+                "Gemini returned an empty response"
+            )
+
+        raw_text = raw_text.strip()
+
+        # Defensive handling in case the model
+        # still returns Markdown code fences.
+        if raw_text.startswith("```"):
+
+            raw_text = raw_text.replace(
+                "```json",
+                ""
+            )
+
+            raw_text = raw_text.replace(
+                "```",
+                ""
+            )
+
+            raw_text = raw_text.strip()
 
         result = json.loads(
             raw_text
@@ -136,11 +192,11 @@ def analyze_video(topic, video):
         )
 
         print(
-            type(error).__name__
+            f"Type: {type(error).__name__}"
         )
 
         print(
-            str(error)
+            f"Message: {str(error)}"
         )
 
         return get_fallback_result(
@@ -149,6 +205,25 @@ def analyze_video(topic, video):
 
 
 def validate_ai_result(result):
+    """
+    Validate and normalize Gemini's AI result.
+    """
+
+    if not isinstance(
+        result,
+        dict
+    ):
+        return get_fallback_result(
+            "AI response is not a JSON object"
+        )
+
+    summary = result.get(
+        "summary",
+        ""
+    )
+
+    if summary is None:
+        summary = ""
 
     return {
         "relevanceScore": clamp_score(
@@ -201,11 +276,8 @@ def validate_ai_result(result):
         ),
 
         "summary": str(
-            result.get(
-                "summary",
-                ""
-            )
-        ),
+            summary
+        ).strip(),
 
         "confidence": clamp_confidence(
             result.get(
@@ -217,10 +289,15 @@ def validate_ai_result(result):
 
 
 def clamp_score(value):
+    """
+    Keep AI score between 0 and 100.
+    """
 
     try:
 
-        value = float(value)
+        value = float(
+            value
+        )
 
         return round(
             max(
@@ -242,10 +319,15 @@ def clamp_score(value):
 
 
 def clamp_confidence(value):
+    """
+    Keep confidence between 0 and 1.
+    """
 
     try:
 
-        value = float(value)
+        value = float(
+            value
+        )
 
         return round(
             max(
@@ -267,6 +349,9 @@ def clamp_confidence(value):
 
 
 def safe_list(value):
+    """
+    Ensure AI list fields always contain strings.
+    """
 
     if not isinstance(
         value,
@@ -275,12 +360,20 @@ def safe_list(value):
         return []
 
     return [
-        str(item)
+        str(item).strip()
         for item in value
+        if item is not None
+        and str(item).strip()
     ]
 
 
 def get_fallback_result(error):
+    """
+    Safe fallback when Gemini analysis fails.
+
+    The processor can still continue processing
+    the remaining videos.
+    """
 
     return {
         "relevanceScore": 0,
