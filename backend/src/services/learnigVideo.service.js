@@ -41,6 +41,13 @@ export const getVideoById = async (id) => {
         );
     }
 
+    if (video.status !== "APPROVED") {
+        throw new AppError(
+            "Video not found",
+            404
+        );
+    }
+
     return video;
 };
 

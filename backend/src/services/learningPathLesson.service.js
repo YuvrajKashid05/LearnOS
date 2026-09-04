@@ -41,6 +41,13 @@ export const getLessonById = async (id) => {
         );
     }
 
+    if (lesson.learningPath.status !== "PUBLISHED") {
+        throw new AppError(
+            "Lesson not found",
+            404
+        );
+    }
+
     return lesson;
 };
 
@@ -48,6 +55,13 @@ export const getLessonsByLearningPathId = async (learningPathId) => {
     const learningPath = await learningPathRepo.findLearningPathById(learningPathId);
 
     if (!learningPath) {
+        throw new AppError(
+            "Learning path not found",
+            404
+        );
+    }
+
+    if (learningPath.status !== "PUBLISHED") {
         throw new AppError(
             "Learning path not found",
             404
